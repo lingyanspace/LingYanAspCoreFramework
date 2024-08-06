@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>    
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="LingYanFrameworkSetting.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="LingYanFrameworkSetting.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="5.3.8" />
+    <PackageReference Include="ShardingCore" Version="7.8.1.21" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.5.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LingYan.DynamicWebApi\LingYan.DynamicWebApi.csproj" />
+    <ProjectReference Include="..\LingYan.Extension\LingYan.Extension.csproj" />
+    <ProjectReference Include="..\LingYan.Model\LingYan.Model.csproj" />
+    <ProjectReference Include="..\LingYan.MultiTenant\LingYan.MultiTenant.csproj" />
+    <ProjectReference Include="..\LingYan.UnitOfWork\LingYan.UnitOfWork.csproj" />
+  </ItemGroup>
+</Project>

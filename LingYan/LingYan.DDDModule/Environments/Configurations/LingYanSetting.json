@@ -1,10 +1,4 @@
 {
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
   //跨域前缀
   "CrossDomains": [
     "http://*:8888"
@@ -13,6 +7,7 @@
   "ListeningPorts": [
     "http://*:8888"
   ],
+
   //动态路由配置
   "HttpMethodConfigure": [
     {
@@ -37,12 +32,12 @@
     "SysTenant": "server=192.168.148.130;port=3306;database=SysTenantIdentify;user=laoda;password=12345678;AllowLoadLocalInfile=true;",
     "SysTenantTemplate": "server=192.168.148.130;port=3306;database=SysTenantExporse;user=laoda;password=12345678;AllowLoadLocalInfile=true;",
     "Others": {
-        "Default": "server=192.168.148.130;port=3306;database=test;user=root;password=123456;AllowLoadLocalInfile=true;",
-        "sss2": "sss"
+      "Default": "server=192.168.148.130;port=3306;database=test;user=root;password=123456;AllowLoadLocalInfile=true;",
+      "Default2": "server=192.168.148.130;port=3306;database=test;user=root;password=123456;AllowLoadLocalInfile=true;"
     }
   },
   "RedisCofigModel": {
-    "Pattern": "Single",
+    "Pattern": "NULL",
     // 单机模式
     "Single": "192.168.148.130:6379,defaultDatabase=1,password=,prefix=ly",
     //哨兵模式
@@ -73,19 +68,31 @@
     "VodServer": "rtmp://ip:port/vod/",
     "LiveServer": "rtmp://ip:port/live/"
   },
-  //日志配置
-  "NlogConfig": "Environments/Configurations/NLog.config",
+  //常规配置
   "CommonConfigModel": {
+    //配置文件位置
     "FFMpegWinConfig": "Environments/FFMpegWinConfig",
     "FFMpegLinuxConfig": "Environments/FFMpegLinuxConfig",
     "NlogConfig": "Environments/Configurations/NLog.config",
+    //网络主机
     "IPLimitVideo": "https://ip:port",
     "IPLimitFile": "https://ip:port",
-    "IPOpenFile": "http://ip:port"
+    "IPOpenFile": "https://ip:port",
+    //物理文件地址名
+    "LimitVideo": "LimitVideo",
+    "LimitFile": "LimitFile",
+    "OpenFile": "OpenFile",
+    "ChatFile": "ChatFile",
+    "SoftFile": "SoftFile"
   },
   //动态路由前缀
   "DynamicHttpRoutePrefix": "dynamicly",
   //多租户路由前缀
   "TenantRoutePrefix": "/api/tenant",
-  "AllowedHosts": "*"
+  //跨域策略
+  "CrossPolicy": "LYCrossPolicy",
+  //鉴权方案
+  "BearerScheme": "Bearer",
+  //授权方案
+  "EmpowerPolicy": "Empower"
 }

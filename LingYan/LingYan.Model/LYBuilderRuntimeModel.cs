@@ -5,17 +5,30 @@ namespace LingYan.Model
 {
     public class LYBuilderRuntimeModel
     {
-        //
-        public List<object> ModuleList = new List<object>();
+        //模块项目
+        public List<object> ModuleList { get; set; }
         //临时缓存
-        public Dictionary<Type, DbContextType> ModuleDbContextList = new Dictionary<Type, DbContextType>();
-        public Dictionary<string, Type> ModuleTenantBaseEntitys = new Dictionary<string, Type>();
-        public List<Type> ModuleManagerList = new List<Type>();
-        public List<Type> ModuleTService = new List<Type>();
-        public List<Type> ModuleTInstance = new List<Type>();
-        public Dictionary<ShardingKeyType, List<Type>> VirtualTableList = new Dictionary<ShardingKeyType, List<Type>>();
-        public List<Type> TenantTemplateDbContexts = new List<Type>();
-        public List<Type> ModuleFiler = new List<Type>(); 
-        public ConfigurationManager ConfigurationManager { get; set; }
+        public Dictionary<Type, DbContextType> ModuleDbContextList { get; set; }
+        public Dictionary<string, Type> ModuleTenantBaseEntitys { get; set; }
+        public List<Type> ModuleManagerList { get; set; }
+        public List<Type> ModuleTService { get; set; }
+        public List<Type> ModuleTInstance { get; set; }
+        public Dictionary<ShardingKeyType, List<Type>> VirtualTableList { get; set; }
+        public List<Type> TenantTemplateDbContexts { get; set; }
+        public List<Type> ModuleFiler { get; set; }
+        public ConfigurationManager LingYanConfiguration { get; set; }
+        public LYBuilderRuntimeModel()
+        {
+            this.ModuleList = new List<object>();
+            this.ModuleDbContextList = new Dictionary<Type, DbContextType>();
+            this.ModuleTenantBaseEntitys = new Dictionary<string, Type>();
+            this.ModuleManagerList = new List<Type>();
+            this.ModuleTService = new List<Type>();
+            this.ModuleTInstance = new List<Type>();
+            this.VirtualTableList = new Dictionary<ShardingKeyType, List<Type>>();
+            this.TenantTemplateDbContexts = new List<Type>();
+            this.ModuleFiler = new List<Type>();
+            this.LingYanConfiguration = new ConfigurationManager();
+        }
     }
 }

@@ -33,12 +33,12 @@ namespace LingYan.DDDModule
             //模块的注册方法执行
             foreach (var module in lYBuilderRuntimeModel.ModuleList)
             {
+                //模块整体注册
+                ConsoleColor.DarkYellow.ConsoleLogger($"【模块注入容器方法执行】{module.GetType().Name}运行方法ARegisterModule...");
                 //方法
                 var method = module.GetType().GetMethod("ARegisterModule");
                 //参数
-                var parameters = builder.GetInstanceParameters(method.GetParameters());
-                //模块整体注册
-                Console.WriteLine($"{method.Name}运行方法“ARegisterModule”，模块方法容器注册");
+                var parameters = builder.GetInstanceParameters(method.GetParameters());              
                 method.Invoke(module, parameters);
             }
         }
@@ -166,17 +166,17 @@ namespace LingYan.DDDModule
                 var backBody = RegisterRedisCilent();
                 if (backBody!=null)
                 {
-                    Console.WriteLine("Redis注册成功");
+                    ConsoleColor.DarkMagenta.ConsoleLogger("【Redis注册成功】...");
                     RedisHelper.Initialization(backBody);
                 }
                 else
                 {
-                    Console.WriteLine("Redis注册失败");
+                    ConsoleColor.DarkRed.ConsoleLogger("【Redis注册失败】...");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("redis配置出错" + ex.Message);
+                ConsoleColor.DarkRed.ConsoleLogger($"【redis配置出错】{ex.Message}...");
             }
         }
         private static CSRedisClient RegisterRedisCilent()
@@ -202,7 +202,7 @@ namespace LingYan.DDDModule
             BuilderService.AddControllers(options =>
             {
                 //路由规则
-                options.UseCentralRouteJsonConfig(lYBuilderRuntimeModel.ConfigurationManager);
+                options.UseCentralRouteJsonConfig(lYBuilderRuntimeModel.LingYanConfiguration);
             }).ConfigureApplicationPartManager(t =>
             {
                 //路由扫射

@@ -10,7 +10,14 @@ namespace LingYan.Model.JWTModel
     {
         public string Issuer { get; set; }
         public string Audience { get; set; }
-        public double Expres { get; set; }
-        public string SecretKey { get; set; } 
+        public long Expres { get; set; }
+        public string SecretKey { get; set; }
+        public JwtModel()
+        {
+            this.Issuer = "LingYanIssuer";
+            this.Audience = "LingYanAudience";
+            this.Expres = 7;
+            this.SecretKey = "IEFIEWPFEWFOUEWHGIWGOIDSMFNCJSDNFJdhfidsghsdnvjdsvsnvsd";
+        }
     }
 }

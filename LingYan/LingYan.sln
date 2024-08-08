@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LingYan.MultiTenant", "Ling
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LingYan.UnitOfWork", "LingYan.UnitOfWork\LingYan.UnitOfWork.csproj", "{56745D92-8198-4DB9-BD0F-2E7E98C3CD5C}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LingYan.IdentityServer", "LingYan.IdentityServer\LingYan.IdentityServer.csproj", "{98A75CD2-023D-4C8F-BABC-00E1C80F29A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{56745D92-8198-4DB9-BD0F-2E7E98C3CD5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{56745D92-8198-4DB9-BD0F-2E7E98C3CD5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{56745D92-8198-4DB9-BD0F-2E7E98C3CD5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98A75CD2-023D-4C8F-BABC-00E1C80F29A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98A75CD2-023D-4C8F-BABC-00E1C80F29A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98A75CD2-023D-4C8F-BABC-00E1C80F29A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98A75CD2-023D-4C8F-BABC-00E1C80F29A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

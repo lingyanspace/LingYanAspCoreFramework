@@ -1,8 +1,6 @@
 ﻿using LingYan.Model;
 using LingYan.Model.BodyModel;
-using LingYan.Model.CommonModel;
 using LingYan.Model.RouteModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
@@ -16,17 +14,21 @@ using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Security;
 using System.IdentityModel.Tokens.Jwt;
-using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Security.Claims;
 using System.Text;
-using static Org.BouncyCastle.Bcpg.Attr.ImageAttrib;
 
 namespace LingYan.Extension
 {
     public static class CommonExtension
     {
+        public static void ConsoleLogger(this ConsoleColor color,string str)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(str);
+            Console.ResetColor(); 
+        }
         public static ILogger ResolveFilterLogger(this AuthorizationFilterContext authorizationFilterContext)
         {
             var controllerType = (authorizationFilterContext.ActionDescriptor as ControllerActionDescriptor).ControllerTypeInfo;
@@ -146,7 +148,7 @@ namespace LingYan.Extension
         /// <param name="productTokenData"></param>
         /// <param name="WebApplicationPrivateKey"></param>
         /// <returns></returns>
-        public static ResponceBody<string> CreateJwtToken(this Dictionary<string, string> productTokenData, string WebApplicationPrivateKey)
+        public static ResponceBody<string> CreateJwtToken(this Dictionary<string, string> productTokenData, string publicKey)
         {
             try
             {
@@ -154,7 +156,7 @@ namespace LingYan.Extension
                 List<Claim> Claims = new List<Claim>();
                 foreach (var data in productTokenData)
                 {
-                    Claims.Add(new Claim(data.Key, data.Value.EncryptWithRSA(WebApplicationPrivateKey).Data));
+                    Claims.Add(new Claim(data.Key, data.Value.EncryptWithRSA(publicKey).Data));
                 }
                 if (!Claims.Select(s => s.Type).ToList().Contains(Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames.Jti))
                 {

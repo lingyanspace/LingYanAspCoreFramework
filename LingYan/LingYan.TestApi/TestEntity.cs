@@ -1,8 +1,5 @@
-﻿using LingYan.SaaSMultiTenantDbSharding.ShardingProvider;
-
-namespace LingYan.TestApi
+﻿namespace LingYan.TestApi
 {
-    [ShardingTB]
     public class TestEntity
     {
         public long Id { get; set; }

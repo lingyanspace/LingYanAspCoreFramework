@@ -1,0 +1,252 @@
+﻿using Dynamitey;
+using LingYan.DynamicShardingDBT.DBTExtension;
+using LingYan.DynamicShardingDBT.DBTModel;
+using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+
+namespace LingYan.DynamicShardingDBT.DBTHelper
+{
+    internal class ShardingHelper
+    {
+        public static List<string> FilterTable(IQueryable queryable, List<string> tableSuffixs, DynamicShardingRule rule)
+        {
+            FilterTableVisitor visitor = rule.DynamicShardingType switch
+            {
+                DynamicShardingType.HashMod => new FilterTableByHashModVisitor(tableSuffixs, rule),
+                DynamicShardingType.Date => new FilterTableByDateVisitor(tableSuffixs, rule),
+                _ => throw new Exception("ShardingType无效")
+            };
+
+            visitor.Visit(queryable.Expression);
+
+            return visitor.GetResTables();
+        }
+
+        private abstract class FilterTableVisitor : ExpressionVisitor
+        {
+            protected readonly List<string> _allTableSuffixs;
+            protected readonly DynamicShardingRule _dynamicShardingRule; 
+            public FilterTableVisitor(List<string> allTableSuffixs, DynamicShardingRule rule)
+            {
+                _allTableSuffixs = allTableSuffixs;
+                _dynamicShardingRule = rule;
+            }
+            protected bool IsParamter(Expression expression)
+            {
+                //nullable类型转换
+                if (expression is UnaryExpression unaryExpression && unaryExpression.NodeType == ExpressionType.Convert)
+                {
+                    return IsParamter(unaryExpression.Operand);
+                }
+                else
+                {
+                    return expression is MemberExpression memberExpression
+                    && memberExpression.Expression.Type == _dynamicShardingRule.EntityType
+                    && memberExpression.Member.Name == _dynamicShardingRule.ShardingField;
+                }
+            }
+            protected bool IsConstant(Expression expression)
+            {
+                return expression is ConstantExpression
+                    || (expression is MemberExpression member && member.Expression is ConstantExpression);
+            }
+            protected object GetFieldValue(Expression expression)
+            {
+                if (expression is ConstantExpression constant1)
+                {
+                    return constant1.Value;
+                }
+                else if (expression is MemberExpression member && member.Expression is ConstantExpression constant2)
+                {
+                    return Dynamic.InvokeGet(constant2.Value, member.Member.Name);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            public abstract List<string> GetResTables();
+        }
+        private class FilterTableByDateVisitor : FilterTableVisitor
+        {
+            private Expression<Func<int, bool>> _where = x => true;
+            public FilterTableByDateVisitor(List<string> allTableSuffixs, DynamicShardingRule rule)
+                : base(allTableSuffixs, rule)
+            {
+            }
+            public override List<string> GetResTables()
+            {
+                return _allTableSuffixs.Where(x => _where.Compile()(_allTableSuffixs.IndexOf(x))).ToList();
+            }
+            protected override Expression VisitMethodCall(MethodCallExpression node)
+            {
+                if (node.Method.Name == "Where"
+                    && node.Arguments[1] is UnaryExpression unaryExpression
+                    && unaryExpression.Operand is LambdaExpression lambdaExpression
+                    && lambdaExpression.Body is BinaryExpression binaryExpression
+                    )
+                {
+                    var newWhere = GetWhere(binaryExpression);
+
+                    _where = _where.And(newWhere);
+                }
+
+                return base.VisitMethodCall(node);
+            }
+            private Expression<Func<int, bool>> GetWhere(BinaryExpression binaryExpression)
+            {
+                Expression<Func<int, bool>> left = x => true;
+                Expression<Func<int, bool>> right = x => true;
+
+                //递归获取
+                if (binaryExpression.Left is BinaryExpression)
+                    left = GetWhere(binaryExpression.Left as BinaryExpression);
+                if (binaryExpression.Right is BinaryExpression)
+                    right = GetWhere(binaryExpression.Right as BinaryExpression);
+
+                //组合
+                if (binaryExpression.NodeType == ExpressionType.AndAlso)
+                {
+                    return left.And(right);
+                }
+                else if (binaryExpression.NodeType == ExpressionType.OrElse)
+                {
+                    return left.Or(right);
+                }
+                //单个
+                else
+                {
+                    bool paramterAtLeft;
+                    DateTime? value = null;
+
+                    if (IsParamter(binaryExpression.Left) && IsConstant(binaryExpression.Right))
+                    {
+                        paramterAtLeft = true;
+                        value = (DateTime?)GetFieldValue(binaryExpression.Right);
+                    }
+                    else if (IsConstant(binaryExpression.Left) && IsParamter(binaryExpression.Right))
+                    {
+                        paramterAtLeft = false;
+                        value = (DateTime?)GetFieldValue(binaryExpression.Left);
+                    }
+                    else
+                        return x => true;
+
+                    string op = binaryExpression.NodeType switch
+                    {
+                        ExpressionType.GreaterThan => paramterAtLeft ? ">=" : "<=",
+                        ExpressionType.GreaterThanOrEqual => paramterAtLeft ? ">=" : "<=",
+                        ExpressionType.LessThan => paramterAtLeft ? "<=" : ">=",
+                        ExpressionType.LessThanOrEqual => paramterAtLeft ? "<=" : ">=",
+                        ExpressionType.Equal => "==",
+                        ExpressionType.NotEqual => "!=",
+                        _ => null
+                    };
+
+                    if (op == null || value == null)
+                        return x => true;
+
+                    string realSuffix = _dynamicShardingRule.GetTableSuffixByField(value.Value);
+                    int index = _allTableSuffixs.IndexOf(realSuffix);
+
+                    //超出范围
+                    if (index == -1)
+                    {
+                        string fullSuffix = value.Value.ToString("yyyyMMddHHmmss");
+                        var newTableSuffixs = _allTableSuffixs.Concat(new string[] { fullSuffix }).OrderBy(x => x).ToList();
+                        int fullIndex = newTableSuffixs.IndexOf(fullSuffix);
+
+                        if (fullIndex == 0 && (op == ">=" || op == "!="))
+                            return x => true;
+                        else if (fullIndex == newTableSuffixs.Count - 1 && (op == "<=" || op == "!="))
+                            return x => true;
+                        else
+                            return x => false;
+                    }
+
+                    var newWhere = DynamicExpressionParser.ParseLambda<int, bool>(
+                        ParsingConfig.Default, false, $@"it {op} @0", index);
+
+                    return newWhere;
+                }
+            }
+        }
+
+        private class FilterTableByHashModVisitor : FilterTableVisitor
+        {
+            private Expression<Func<string, bool>> _where = x => true;
+            public FilterTableByHashModVisitor(List<string> allTables, DynamicShardingRule rule)
+                : base(allTables, rule)
+            {
+            }
+            public override List<string> GetResTables()
+            {
+                return _allTableSuffixs.Where(_where.Compile()).ToList();
+            }
+            protected override Expression VisitMethodCall(MethodCallExpression node)
+            {
+                if (node.Method.Name == "Where"
+                    && node.Arguments[1] is UnaryExpression unaryExpression
+                    && unaryExpression.Operand is LambdaExpression lambdaExpression
+                    && lambdaExpression.Body is BinaryExpression binaryExpression
+                    )
+                {
+                    var newWhere = GetWhere(binaryExpression);
+
+                    _where = _where.And(newWhere);
+                }
+
+                return base.VisitMethodCall(node);
+            }
+            private Expression<Func<string, bool>> GetWhere(BinaryExpression binaryExpression)
+            {
+                Expression<Func<string, bool>> left = x => true;
+                Expression<Func<string, bool>> right = x => true;
+
+                //递归获取
+                if (binaryExpression.Left is BinaryExpression)
+                    left = GetWhere(binaryExpression.Left as BinaryExpression);
+                if (binaryExpression.Right is BinaryExpression)
+                    right = GetWhere(binaryExpression.Right as BinaryExpression);
+
+                //组合
+                if (binaryExpression.NodeType == ExpressionType.AndAlso)
+                {
+                    return left.And(right);
+                }
+                else if (binaryExpression.NodeType == ExpressionType.OrElse)
+                {
+                    return left.Or(right);
+                }
+                //单个
+                else if (binaryExpression.NodeType == ExpressionType.Equal)
+                {
+                    object value = null;
+
+                    if (IsParamter(binaryExpression.Left) && IsConstant(binaryExpression.Right))
+                    {
+                        value = GetFieldValue(binaryExpression.Right);
+                    }
+                    else if (IsConstant(binaryExpression.Left) && IsParamter(binaryExpression.Right))
+                    {
+                        value = GetFieldValue(binaryExpression.Left);
+                    }
+                    else
+                        return x => true;
+
+                    if (value == null)
+                        return x => true;
+
+                    string suffix = _dynamicShardingRule.GetTableSuffixByField(value);
+
+                    var newWhere = DynamicExpressionParser.ParseLambda<string, bool>(
+                        ParsingConfig.Default, false, $@"it == @0", suffix);
+
+                    return newWhere;
+                }
+                else
+                    return x => true;
+            }
+        }
+    }
+}

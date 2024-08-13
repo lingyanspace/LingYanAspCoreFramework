@@ -1,0 +1,334 @@
+﻿using LingYan.DynamicShardingDBT.DBTContext;
+using LingYan.DynamicShardingDBT.DBTExtension;
+using LingYan.DynamicShardingDBT.DBTFactory;
+using LingYan.DynamicShardingDBT.DBTHelper;
+using LingYan.DynamicShardingDBT.DBTModel;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
+using System.Data.Common;
+using System.Text.RegularExpressions;
+
+namespace LingYan.DynamicShardingDBT.DBTProvider
+{
+    internal class DynamicDBTService : DefaultDbService
+    {
+        #region 构造函数
+
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="baseDbContext">BaseDbContext</param>
+        public DynamicDBTService(DynamicDbContext baseDbContext)
+        {
+            _db = baseDbContext;
+            _provider = DynamicDBTFactory.GetProvider(DbType);
+        }
+
+        #endregion
+
+        #region 私有成员
+
+        protected DynamicDBTProvider _provider { get; }
+        protected DynamicDbContext _db { get; }
+        protected IDbContextTransaction _transaction { get; set; }
+        protected bool _openedTransaction { get; set; } = false;
+        protected virtual string FormatFieldName(string name)
+        {
+            throw new NotImplementedException("请在子类实现!");
+        }
+        protected virtual string FormatParamterName(string name)
+        {
+            return $"@{name}";
+        }
+        protected virtual string GetSchema(string schema)
+        {
+            throw new Exception("请在子类实现");
+        }
+        private string GetFormatedSchemaAndTableName(Type entityType)
+        {
+            string schema = AnnotationHelper.GetDbSchemaName(entityType);
+            schema = GetSchema(schema);
+            string table = AnnotationHelper.GetDbTableName(entityType);
+            if (!_db.DynamicDBCParamater.Suffix.IsNullOrEmpty())
+            {
+                table += $"_{_db.DynamicDBCParamater.Suffix}";
+            }
+
+            string fullName = schema.IsNullOrEmpty() ? FormatFieldName(table) : $"{FormatFieldName(schema)}.{FormatFieldName(table)}";
+
+            return fullName;
+        }
+        private (string sql, List<(string paramterName, object paramterValue)> paramters) GetWhereSql(IQueryable query)
+        {
+            List<(string paramterName, object paramterValue)> paramters =
+                [];
+            (string sql, IReadOnlyDictionary<string, object> parameters) = query.ToSql();
+            string theSql = sql.Replace("\r\n", "\n").Replace("\n", " ");
+
+            //替换AS
+            string asPattern = "FROM (.*?) AS (.*?) ";
+            //倒排防止别名出错
+            IEnumerable<Match> asMatchs = Regex.Matches(theSql, asPattern).Cast<Match>().Reverse();
+            foreach (Match aMatch in asMatchs)
+            {
+                string tableName = aMatch.Groups[1].ToString();
+                string asName = aMatch.Groups[2].ToString();
+
+                theSql = theSql.Replace(aMatch.Groups[0].ToString(), $"FROM {tableName} ");
+                theSql = theSql.Replace(asName + ".", tableName + ".");
+            }
+
+            //无筛选
+            if (!theSql.Contains("WHERE"))
+            {
+                return (" 1=1 ", paramters);
+            }
+
+            int firstIndex = theSql.IndexOf("WHERE") + 5;
+            string whereSql = theSql[firstIndex..];
+
+            parameters?.ForEach(aData =>
+            {
+                if (whereSql.Contains(aData.Key))
+                {
+                    paramters.Add((aData.Key, aData.Value));
+                }
+            });
+
+            return (whereSql, paramters);
+        }
+        private (string sql, List<(string paramterName, object paramterValue)> paramters) GetDeleteSql(IQueryable iq)
+        {
+            string tableName = GetFormatedSchemaAndTableName(iq.ElementType);
+            (string sql, List<(string paramterName, object paramterValue)> paramters) whereSql = GetWhereSql(iq);
+            string sql = $"DELETE FROM {tableName} WHERE {whereSql.sql}";
+
+            return (sql, whereSql.paramters);
+        }
+        private (string sql, List<(string paramterName, object paramterValue)> paramters) GetUpdateWhereSql(IQueryable iq, params (string field, DynamicUpdateType updateType, object value)[] values)
+        {
+            string tableName = GetFormatedSchemaAndTableName(iq.ElementType);
+            (string sql, List<(string paramterName, object paramterValue)> paramters) whereSql = GetWhereSql(iq);
+
+            List<string> propertySetStr = [];
+
+            values.ToList().ForEach(aProperty =>
+            {
+                string paramterName = FormatParamterName($"_p_{aProperty.field}");
+                string formatedField = FormatFieldName(aProperty.field);
+                whereSql.paramters.Add((paramterName, aProperty.value));
+
+                string setValueBody = string.Empty;
+                switch (aProperty.updateType)
+                {
+                    case DynamicUpdateType.Equal: setValueBody = paramterName; break;
+                    case DynamicUpdateType.Add: setValueBody = $" {formatedField} + {paramterName} "; break;
+                    case DynamicUpdateType.Minus: setValueBody = $" {formatedField} - {paramterName} "; break;
+                    case DynamicUpdateType.Multiply: setValueBody = $" {formatedField} * {paramterName} "; break;
+                    case DynamicUpdateType.Divide: setValueBody = $" {formatedField} / {paramterName} "; break;
+                    case DynamicUpdateType.Concat:
+                        {
+                            string symbol = new DynamicDBType[] { DynamicDBType.PostgreSql, DynamicDBType.Oracle, DynamicDBType.SQLite }
+                                .Contains(_db.DynamicDBCParamater.DynamicDatabase) ? "||" : "+";
+                            setValueBody = $" {formatedField} {symbol} {paramterName} ";
+                        }; break;
+
+                    default: throw new Exception("updateType无效");
+                }
+
+                propertySetStr.Add($" {formatedField} = {setValueBody} ");
+            });
+            string sql = $"UPDATE {tableName} SET {string.Join(",", propertySetStr)} WHERE {whereSql.sql}";
+
+            return (sql, whereSql.paramters);
+        }
+        private List<DbParameter> CreateDbParamters((string paramterName, object paramterValue)[] paramters)
+        {
+            List<DbParameter> dbParamters = [];
+            paramters?.ForEach(aParamter =>
+            {
+                DbParameter newParamter = _provider.GetDbParameter();
+                newParamter.ParameterName = aParamter.paramterName;
+                newParamter.Value = aParamter.paramterValue;
+                dbParamters.Add(newParamter);
+            });
+
+            return dbParamters;
+        }
+
+        #endregion
+
+        #region 事物相关
+
+        public override async Task BeginTransactionAsync(IsolationLevel isolationLevel)
+        {
+            _openedTransaction = true;
+            _transaction = await _db.Database.BeginTransactionAsync(isolationLevel);
+        }
+        public override void CommitTransaction()
+        {
+            _transaction?.Commit();
+        }
+        public override void DisposeTransaction()
+        {
+            if (!_disposed)
+            {
+                _db.Detach();
+            }
+
+            _transaction?.Dispose();
+            _openedTransaction = false;
+        }
+        public override void RollbackTransaction()
+        {
+            _transaction?.Rollback();
+        }
+
+        #endregion
+
+        #region 数据库相关
+
+        public override string ConnectionString => _db.DynamicDBCParamater.ConnectionString;
+        public override DynamicDBType DbType => _db.DynamicDBCParamater.DynamicDatabase;
+        public override IDynamicDBTService FullDbAccessor => this;
+        public override async Task<int> SaveChangesAsync(bool tracking = true)
+        {
+            int count = await _db.SaveChangesAsync();
+            if (!tracking && !_openedTransaction)
+            {
+                _db.Detach();
+            }
+
+            return count;
+        }
+        public override EntityEntry Entry(object entity)
+        {
+            return _db.Entry(entity);
+        }
+
+        #endregion
+
+        #region 增加数据
+
+        public override void BulkInsert<T>(List<T> entities, string tableName = null)
+        {
+            throw new Exception("待支持");
+        }
+        public override async Task<int> InsertAsync<T>(List<T> entities, bool tracking = false)
+        {
+            //await _db.Set<T>().AddRangeAsync(entities);
+            await _db.AddRangeAsync(entities);
+
+            return await SaveChangesAsync(tracking);
+        }
+
+        #endregion
+
+        #region 删除数据
+
+        public override async Task<int> DeleteSqlAsync(IQueryable source)
+        {
+            (string sql, List<(string paramterName, object paramterValue)> paramters) sql = GetDeleteSql(source);
+
+            return await ExecuteSqlAsync(sql.sql, sql.paramters.ToArray());
+        }
+        public override async Task<int> DeleteAsync<T>(List<T> entities)
+        {
+            _db.RemoveRange(entities);
+            //_db.Set<T>().RemoveRange(entities);
+            //entities.ForEach(aEntity =>
+            //{
+            //    _db.Entry<T>(aEntity).State = EntityState.Deleted;
+            //});
+            return await SaveChangesAsync(false);
+        }
+
+        #endregion
+
+        #region 更新数据
+
+        public override async Task<int> UpdateAsync<T>(List<T> entities, bool tracking = false)
+        {
+            entities.ForEach(aEntity =>
+            {
+                _db.Entry<T>(aEntity).State = EntityState.Modified;
+            });
+
+            return await SaveChangesAsync(tracking);
+        }
+        public override async Task<int> UpdateAsync<T>(List<T> entities, List<string> properties, bool tracking = false)
+        {
+            entities.ForEach(aEntity =>
+            {
+                properties.ForEach(aProperty =>
+                {
+                    _db.Entry<T>(aEntity).Property(aProperty).IsModified = true;
+                });
+            });
+
+            return await SaveChangesAsync(tracking);
+        }
+        public override async Task<int> UpdateSqlAsync(IQueryable source, params (string field, DynamicUpdateType updateType, object value)[] values)
+        {
+            (string sql, List<(string paramterName, object paramterValue)> paramters) sql = GetUpdateWhereSql(source, values);
+
+            return await ExecuteSqlAsync(sql.sql, sql.paramters.ToArray());
+        }
+
+        #endregion
+
+        #region 查询数据
+
+        public override async Task<T> GetEntityAsync<T>(params object[] keyValue)
+        {
+            T obj = await _db.Set<T>().FindAsync(keyValue);
+            if (!obj.IsNullOrEmpty())
+            {
+                _db.Entry(obj).State = EntityState.Detached;
+            }
+
+            return obj;
+        }
+        public override IQueryable<T> GetIQueryable<T>(bool tracking = false)
+        {
+            IQueryable<T> q = _db.Set<T>();
+
+            if (!tracking)
+            {
+                q = q.AsNoTracking();
+            }
+
+            return q;
+        }
+
+        #endregion
+
+        #region 执行Sql语句
+
+        public override async Task<int> ExecuteSqlAsync(string sql, params (string paramterName, object paramterValue)[] parameters)
+        {
+            return await _db.Database.ExecuteSqlRawAsync(sql, CreateDbParamters(parameters).ToArray());
+        }
+
+        #endregion
+
+        #region Dispose
+
+        private bool _disposed = false;
+        public override void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            DisposeTransaction();
+            _db.Dispose();
+        }
+
+        #endregion
+    }
+}

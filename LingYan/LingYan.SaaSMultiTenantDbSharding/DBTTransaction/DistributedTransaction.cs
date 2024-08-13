@@ -1,0 +1,140 @@
+﻿using LingYan.DynamicShardingDBT.DBTExtension;
+using LingYan.DynamicShardingDBT.DBTProvider;
+using Quartz.Impl.AdoJobStore;
+using System.Data;
+
+namespace LingYan.DynamicShardingDBT.DBTTransaction
+{
+    /// <summary>
+    /// 数据库分布式事务,跨库事务
+    /// </summary>
+    internal class DistributedTransaction : IDistributedTransaction
+    {
+        #region 内部成员
+
+        private IsolationLevel _isolationLevel { get; set; }
+        private SynchronizedCollection<IDynamicDBTService> _repositories { get; set; }= new SynchronizedCollection<IDynamicDBTService>();
+
+        #endregion
+
+        #region 外部接口
+
+        public bool OpenTransaction { get; set; }
+
+        public void AddDBTService(params IDynamicDBTService[] repositories)
+        {
+            repositories.ForEach(aRepositroy =>
+            {
+                if (!_repositories.Contains(aRepositroy)) 
+                {
+                    if (OpenTransaction)
+                        aRepositroy.BeginTransaction(_isolationLevel);
+
+                    _repositories.Add(aRepositroy);
+                }
+            });
+        }
+
+        public void BeginTransaction(IsolationLevel isolationLevel)
+        {
+            OpenTransaction = true;
+            _isolationLevel = isolationLevel;
+            _repositories.ForEach(aDbAccessor => aDbAccessor.BeginTransaction(isolationLevel));
+        }
+
+        public async Task BeginTransactionAsync(IsolationLevel isolationLevel)
+        {
+            OpenTransaction = true;
+            _isolationLevel = isolationLevel;
+            foreach (var aDbAccessor in _repositories)
+            {
+                await aDbAccessor.BeginTransactionAsync(isolationLevel);
+            }
+        }
+
+        public (bool Success, Exception ex) RunTransaction(Action action, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+        {
+            bool isOK = true;
+            Exception resEx = null;
+            try
+            {
+                BeginTransaction(isolationLevel);
+
+                action();
+
+                CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                RollbackTransaction();
+                isOK = false;
+                resEx = ex;
+            }
+            finally
+            {
+                DisposeTransaction();
+            }
+
+            return (isOK, resEx);
+        }
+
+        public void CommitTransaction()
+        {
+            _repositories.ForEach(x => x.CommitTransaction());
+        }
+
+        public void RollbackTransaction()
+        {
+            _repositories.ForEach(x => x.RollbackTransaction());
+        }
+
+        public void DisposeTransaction()
+        {
+            OpenTransaction = false;
+            _repositories.ForEach(x => x.DisposeTransaction());
+        }
+
+        public async Task<(bool Success, Exception ex)> RunTransactionAsync(Func<Task> action, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+        {
+            bool isOK = true;
+            Exception resEx = null;
+            try
+            {
+                await BeginTransactionAsync(isolationLevel);
+
+                await action();
+
+                CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                RollbackTransaction();
+                isOK = false;
+                resEx = ex;
+            }
+            finally
+            {
+                DisposeTransaction();
+            }
+
+            return (isOK, resEx);
+        }
+
+        #endregion
+
+        #region Dispose
+
+        private bool _disposed = false;
+        public virtual void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            DisposeTransaction();
+            _repositories = null;
+        }
+
+        #endregion
+    }
+}

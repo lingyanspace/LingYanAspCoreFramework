@@ -1,6 +1,5 @@
 ﻿using LingYan.DynamicShardingDBT.DBTExtension;
 using LingYan.DynamicShardingDBT.DBTFactory;
-using LingYan.DynamicShardingDBT.DBTIoc;
 using LingYan.DynamicShardingDBT.DBTModel;
 using Microsoft.EntityFrameworkCore.Design;
 
@@ -8,40 +7,33 @@ namespace LingYan.TestApi
 {
     public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<TestDbContext>
     {
-        public static readonly IServiceProvider ServiceProvider;
-        private static readonly string _connectionString = "server=192.168.148.131;port=3306;database=sharding_test_1;user=laoda;password=12345678;AllowLoadLocalInfile=true;";
+        static string mysql1 = "server=192.168.148.131;port=3306;database=sharding_test_1;user=laoda;password=12345678;AllowLoadLocalInfile=true;";
+        static DateTime startTime = new DateTime(2024, 8, 14, 17, 20, 0);
         static DesignTimeDbContextFactory()
         {
-            Console.WriteLine("进入工厂");
-            DateTime startTime = new DateTime(2024, 1, 1);
             ServiceCollection services = new ServiceCollection();
-            services.AddDynamicShardingDBT(x =>
+            services.AddDynamicShardingDBT(DBTEnv.DEV,config =>
             {
-                Console.WriteLine("进入后执行委托");
-                x.SetEntityAssemblies(typeof(DesignTimeDbContextFactory).Assembly);
-                x.EnableComments(true);
-
-                //取消建表
-                x.CreateShardingTableOnStarting(false);
-
-                //取消外键
-                x.MigrationsWithoutForeignKey();
-
+                config.SetEntityAssemblies(typeof(DesignTimeDbContextFactory).Assembly);
                 //使用分表迁移
-                x.EnableShardingMigration(true);
-
-                //添加数据源
-                x.AddDataSource(_connectionString, DynamicReadWriteType.Read | DynamicReadWriteType.Write, DynamicDBType.MySql);
-
-                //按月分表
-                x.SetDateSharding<TestEntity>(nameof(TestEntity.TimeKey), DynamicExpandByDateMode.PerMonth, startTime);
-
-                x.UseDatabase(_connectionString, DynamicDBType.MySql);
+                config.EnableShardingMigration(true);
+                config.AddDataSource(mysql1, DynamicReadWriteType.Read | DynamicReadWriteType.Write, DynamicDBType.MySql);
+                //按分钟分表
+                config.SetDateSharding<TestEntity>(nameof(TestEntity.TimeKey), DynamicExpandByDateMode.PerMinute, startTime);
+                //使用数据库
+                config.UseDatabase(mysql1, DynamicDBType.MySql);
             });
             ServiceProvider = services.BuildServiceProvider();
-            Console.WriteLine("启动后台线程");
-            new DynamicShardingBootstrapper(ServiceProvider).StartAsync(default).Wait();
-        }      
+            ServiceProvider.UseDynamicShardingDBT();
+        }
+
+        public static readonly IServiceProvider ServiceProvider;
+
+        /// <summary>
+        /// 创建数据库上下文
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public TestDbContext CreateDbContext(string[] args)
         {
             Console.WriteLine("开始创建数据库上下文");
@@ -49,7 +41,7 @@ namespace LingYan.TestApi
                 .GetService<IDynamicDBTFactory>()
                 .GetDbContext(new DynamicDBCParamater
                 {
-                    ConnectionString = _connectionString,
+                    ConnectionString = mysql1,
                     DynamicDatabase = DynamicDBType.MySql,
                 });
             return new TestDbContext(db);

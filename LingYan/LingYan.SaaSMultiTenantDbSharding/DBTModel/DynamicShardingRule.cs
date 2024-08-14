@@ -32,19 +32,28 @@ namespace LingYan.DynamicShardingDBT.DBTModel
                         return suffix.ToString();
                     };
                 case DynamicShardingType.Date:
+                    string format;
+                    switch (DynamicExpandByDateMode)
                     {
-                        string format = DynamicExpandByDateMode switch
-                        {
-                            LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerMinute => "yyyyMMddHHmm",
-                            LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerHour => "yyyyMMddHH",
-                            LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerDay => "yyyyMMdd",
-                            LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerMonth => "yyyyMM",
-                            LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerYear => "yyyy",
-                            _ => throw new Exception("ExpandByDateMode无效")
-                        };
-
-                        return ((DateTime)fieldValue).ToString(format);
-                    };
+                        case LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerMinute:
+                            format = "yyyyMMddHHmm";
+                            break;
+                        case LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerHour:
+                            format = "yyyyMMddHH";
+                            break;
+                        case LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerDay:
+                            format = "yyyyMMdd";
+                            break;
+                        case LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerMonth:
+                            format = "yyyyMM";
+                            break;
+                        case LingYan.DynamicShardingDBT.DBTModel.DynamicExpandByDateMode.PerYear:
+                            format = "yyyy";
+                            break;
+                        default:
+                            throw new Exception("ExpandByDateMode无效");
+                    }
+                    return ((DateTime)fieldValue).ToString(format);
                 default: throw new Exception("ShardingType无效");
             }
         }

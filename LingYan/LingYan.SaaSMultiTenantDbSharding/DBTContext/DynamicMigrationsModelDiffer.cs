@@ -47,7 +47,6 @@ namespace LingYan.DynamicShardingDBT.DBTContext
         {
             var shardingOption = DynamicDBTCache.ServiceProvider.GetService<IOptions<DynamicDBTOption>>().Value;
             var sourceOperations = base.GetDifferences(source, target).ToList();
-
             //忽略外键
             if (shardingOption.MigrationsWithoutForeignKey)
             {
@@ -57,7 +56,6 @@ namespace LingYan.DynamicShardingDBT.DBTContext
                     operation.ForeignKeys?.Clear();
                 }
             }
-
             return sourceOperations;
         }
     }

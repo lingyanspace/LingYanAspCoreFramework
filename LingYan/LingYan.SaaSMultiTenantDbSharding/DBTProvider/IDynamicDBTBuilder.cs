@@ -57,7 +57,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="enable">是否启用</param>
         /// <returns></returns>
         IDynamicDBTBuilder EnableComments(bool enable);
-
         /// <summary>
         /// 使用逻辑删除
         /// </summary>
@@ -65,14 +64,12 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="deletedField">已删除标志字段,字段类型为bool</param>
         /// <returns></returns>
         IDynamicDBTBuilder UseLogicDelete(string keyField = "Id", string deletedField = "Deleted");
-
         /// <summary>
         /// 设置记录执行SQL的最小执行时长，默认50ms
         /// </summary>
         /// <param name="minCommandElapsedMilliseconds"></param>
         /// <returns></returns>
         IDynamicDBTBuilder SetMinCommandElapsedMilliseconds(int minCommandElapsedMilliseconds);
-
         /// <summary>
         /// 使用默认数据库
         /// 注入IDbAccessor
@@ -83,7 +80,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="optionsBuilder">自定义配置</param>
         /// <returns></returns>
         IDynamicDBTBuilder UseDatabase(string conString, DynamicDBType dbType, string entityNamespace = null, Action<DynamicDBTOption> optionsBuilder = null);
-
         /// <summary>
         /// 使用数据库
         /// </summary>
@@ -94,7 +90,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="optionsBuilder">自定义配置</param>
         /// <returns></returns>
         IDynamicDBTBuilder UseDatabase<TDbAccessor>(string conString, DynamicDBType dbType, string entityNamespace = null, Action<DynamicDBTOption> optionsBuilder = null) where TDbAccessor : class, IDynamicDBTService;
-
         /// <summary>
         /// 使用默认数据库
         /// 注入IDbAccessor
@@ -105,7 +100,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="optionsBuilder">自定义配置</param>
         /// <returns></returns>
         IDynamicDBTBuilder UseDatabase((string connectionString, DynamicReadWriteType readWriteType)[] dbs, DynamicDBType dbType, string entityNamespace = null, Action<DynamicDBTOption> optionsBuilder = null);
-
         /// <summary>
         /// 使用数据库
         /// </summary>
@@ -116,7 +110,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="optionsBuilder">自定义配置</param>
         /// <returns></returns>
         IDynamicDBTBuilder UseDatabase<TDbAccessor>((string connectionString, DynamicReadWriteType readWriteType)[] dbs, DynamicDBType dbType, string entityNamespace = null, Action<DynamicDBTOption> optionsBuilder = null) where TDbAccessor : class, IDynamicDBTService;
-
         /// <summary>
         /// 添加数据源
         /// </summary>
@@ -126,7 +119,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="sourceName">数据源名</param>
         /// <returns></returns>
         IDynamicDBTBuilder AddDataSource(string connectionString, DynamicReadWriteType readWriteType, DynamicDBType dbType, string sourceName = "DefaultSource");
-
         /// <summary>
         /// 添加数据源
         /// </summary>
@@ -135,7 +127,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
         /// <param name="sourceName">数据源名</param>
         /// <returns></returns>
         IDynamicDBTBuilder AddDataSource((string connectionString, DynamicReadWriteType readWriteType)[] dbs, DynamicDBType dbType, string sourceName = "DefaultSource");
-
         /// <summary>
         /// 设置分表规则(哈希取模)
         /// 注:默认自动创建分表(若分表不存在)
@@ -150,7 +141,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
             int mod,
             string sourceName = DynamicDBTCache.DefaultSource
             );
-
         /// <summary>
         /// 设置分表规则(哈希取模)
         /// 注:默认自动创建分表(若分表不存在)
@@ -165,7 +155,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
             int mod,
             params (int start, int end, string sourceName)[] ranges
             );
-
         /// <summary>
         /// 设置分表规则(按日期)
         /// </summary>
@@ -181,7 +170,6 @@ namespace LingYan.DynamicShardingDBT.DBTProvider
             DateTime startTime,
             string sourceName = DynamicDBTCache.DefaultSource
             );
-
         /// <summary>
         /// 设置分表规则(按日期)
         /// </summary>

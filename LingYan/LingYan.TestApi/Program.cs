@@ -1,7 +1,6 @@
-
 using LingYan.DynamicShardingDBT.DBTExtension;
-using LingYan.DynamicShardingDBT.DBTIoc;
 using LingYan.DynamicShardingDBT.DBTModel;
+using Microsoft.EntityFrameworkCore;
 
 namespace LingYan.TestApi
 {
@@ -10,32 +9,24 @@ namespace LingYan.TestApi
         public static void Main(string[] args)
         {
             Console.WriteLine("进入主机");
-            var mysqlConnectionstr = "192.168.148.131;port=3306;database=test;user=laoda;password=12345678;AllowLoadLocalInfile=true;";
-            DateTime startTime = new DateTime(2024, 1, 1);
-            var builder = WebApplication.CreateBuilder(args);
-            //配置初始化
-            builder.Services.AddLogging(x =>
-            {
-                x.AddConsole();
-            });
-            builder.Services.AddDynamicShardingDBT(config =>
+            var mysql1 = "server=192.168.148.131;port=3306;database=sharding_test_1;user=laoda;password=12345678;AllowLoadLocalInfile=true;";
+            DateTime startTime = new DateTime(2024, 8, 14, 17, 20, 0);
+            var builder = WebApplication.CreateBuilder(args);           
+            builder.Services.AddDynamicShardingDBT(DBTEnv.PRO, config =>
             {
                 config.SetEntityAssemblies(typeof(TestEntity).Assembly);
-
                 //添加数据源
-                config.AddDataSource(mysqlConnectionstr, DynamicReadWriteType.Read | DynamicReadWriteType.Write, DynamicDBType.MySql);
-
+                config.AddDataSource(mysql1, DynamicReadWriteType.Read | DynamicReadWriteType.Write, DynamicDBType.MySql);
                 //按分钟分表
-                config.SetDateSharding<TestEntity>(nameof(TestEntity.TimeKey), DynamicExpandByDateMode.PerMonth, startTime);
+                config.SetDateSharding<TestEntity>(nameof(TestEntity.TimeKey), DynamicExpandByDateMode.PerMinute, startTime);
             });
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-           
+            builder.Services.AddSwaggerGen();           
             var app = builder.Build();
-            new DynamicShardingBootstrapper(app.Services).StartAsync(default).Wait();
+            app.Services.UseDynamicShardingDBT();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {

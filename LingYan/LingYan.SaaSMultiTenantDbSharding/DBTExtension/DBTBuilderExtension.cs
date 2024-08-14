@@ -1,21 +1,19 @@
-﻿using LingYan.DynamicShardingDBT.DBTFactory;
-using LingYan.DynamicShardingDBT.DBTIoc;
+﻿using LingYan.DynamicShardingDBT.DBTBuilder;
+using LingYan.DynamicShardingDBT.DBTFactory;
 using LingYan.DynamicShardingDBT.DBTModel;
 using LingYan.DynamicShardingDBT.DBTProvider;
-using LingYan.DynamicShardingDBT.ShardingIoc;
 using Microsoft.Extensions.DependencyInjection;
-using Quartz.Spi;
 
 namespace LingYan.DynamicShardingDBT.DBTExtension
 {
-    public static class IocExtension
+    public static class DBTBuilderExtension
     {
-        public static IServiceCollection AddDynamicShardingDBT(this IServiceCollection services, Action<IDynamicDBTBuilder> builder)
+        public static IServiceCollection AddDynamicShardingDBT(this IServiceCollection services,DBTEnv dBTEnv, Action<IDynamicDBTBuilder> builder)
         {
+            Console.WriteLine("注入分表框架");
             services.AddOptions<DynamicDBTOption>();
             services.AddLogging();
-
-            DynamicaDBTIoc container = new DynamicaDBTIoc(services);
+            DynamicaDBTBuilder container = new DynamicaDBTBuilder(services);
             builder?.Invoke(container);
             services.AddSingleton(container);
             services.AddSingleton<IDynamicDBTBuilder>(container);
@@ -23,10 +21,13 @@ namespace LingYan.DynamicShardingDBT.DBTExtension
             services.AddScoped<DynamicDBTFactory>();
             services.AddScoped<IDynamicDBTFactory, DynamicDBTFactory>();
             services.AddScoped<IDynamicShardingDBTService, DynamicShardingDBTService>();
-
-            services.AddHostedService<DynamicShardingBootstrapper>();
-
+            services.AddHostedService<DynamicShardingInitializer>();
             return services;
+        }
+        public static void UseDynamicShardingDBT(this IServiceProvider app)
+        {
+            Console.WriteLine("启用分表框架");
+            new DynamicShardingInitializer(app).StartAsync(default).Wait();
         }
     }
 }

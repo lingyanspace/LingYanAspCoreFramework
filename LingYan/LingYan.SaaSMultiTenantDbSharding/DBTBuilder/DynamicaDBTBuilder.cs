@@ -7,15 +7,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Reflection;
-namespace LingYan.DynamicShardingDBT.ShardingIoc
+namespace LingYan.DynamicShardingDBT.DBTBuilder
 {
     //分片容器
-    internal class DynamicaDBTIoc:IDynamicDBTBuilder, IDynamicDBTConfig
+    internal class DynamicaDBTBuilder : IDynamicDBTBuilder, IDynamicDBTConfig
     {
         #region 构造函数
 
         private readonly IServiceCollection _services;
-        public DynamicaDBTIoc(IServiceCollection services)
+        public DynamicaDBTBuilder(IServiceCollection services)
         {
             _services = services;
         }
@@ -23,11 +23,11 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
         #endregion
 
         #region 私有成员
-
+        //步骤2线程安全集合初始化、数据库源，物理表，分表规则，分表扩展
         private readonly SynchronizedCollection<DynamicDataSource> _dataSources = new SynchronizedCollection<DynamicDataSource>();
         private readonly SynchronizedCollection<DynamicShardingRule> _shardingRules = new SynchronizedCollection<DynamicShardingRule>();
         private readonly SynchronizedCollection<DynamicPhysicTable> _physicTables = new SynchronizedCollection<DynamicPhysicTable>();
-
+        public readonly Dictionary<string, List<string>> ExistsShardingTables = new Dictionary<string, List<string>>();
         private List<(string suffix, string conString, DynamicDBType dbType)> GetTargetTables<TEntity>(DynamicReadWriteType dynamicReadWriteType, object obj = null)
         {
             var entityType = typeof(TEntity);
@@ -42,7 +42,6 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
                 string tableSuffix = rule.GetTableSuffixByEntity(obj);
                 tables = tables.Where(x => x.Suffix == tableSuffix).ToList();
             }
-
             //数据库组中数据库负载均衡
             var resList = tables.Select(x =>
             {
@@ -53,18 +52,18 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
 
                 return (x.Suffix, theDb.connectionString, theSource.DbType);
             }).ToList();
-
             return resList;
         }
+        //验证规则
         private void CheckRule<TEntity>(DynamicShardingType dynamicShardingType, string shardingField)
-        { 
+        {
             if (_shardingRules.Any(x => x.EntityType == typeof(TEntity)))
                 throw new Exception($"{typeof(TEntity).Name}已存在分表规则!");
 
             Type fieldType = typeof(TEntity).GetProperty(shardingField)?.PropertyType;
             if (fieldType == null)
                 throw new Exception($"不存在分表字段:{shardingField}");
-            if (fieldType.IsNullOrEmpty())
+            if (fieldType.IsNullable())
                 throw new Exception($"分表字段:{shardingField}不能为可空类型");
 
             if (dynamicShardingType == DynamicShardingType.Date)
@@ -89,6 +88,7 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
                 });
             }
         }
+        //todo11
         private void CreateTable<TEntity>(IServiceProvider serviceProvider, string sourceName, string suffix)
         {
             var theSource = _dataSources.Where(x => x.Name == sourceName).FirstOrDefault();
@@ -97,8 +97,7 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
                 serviceProvider.GetService<DynamicDBTFactory>().CreateTable(aDb.connectionString, theSource.DbType, typeof(TEntity), suffix);
             });
         }
-        private List<(string suffix, string conString, DynamicDBType dbType)> FilterTable<T>(
-            List<(string suffix, string conString, DynamicDBType dbType)> allTables, IQueryable<T> source)
+        private List<(string suffix, string conString, DynamicDBType dbType)> FilterTable<T>(List<(string suffix, string conString, DynamicDBType dbType)> allTables, IQueryable<T> source)
         {
             var entityType = typeof(T);
             string absTable = AnnotationHelper.GetDbTableName(source.ElementType);
@@ -106,11 +105,9 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
             var allTableSuffixs = allTables.Select(x => x.suffix).ToList();
             var findSuffixs = ShardingHelper.FilterTable(source, allTableSuffixs, rule);
             allTables = allTables.Where(x => findSuffixs.Contains(x.suffix)).ToList();
-#if DEBUG
-            Console.WriteLine($"访问分表:{string.Join(",", findSuffixs.Select(x => $"{absTable}_{x}"))}");
-#endif
             return allTables;
         }
+        //todo10
         private void AddShardingTable(string absTableName, string fullTableName)
         {
             if (!ExistsShardingTables.ContainsKey(absTableName))
@@ -148,17 +145,14 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
         {
             return _dataSources.FirstOrDefault().DbType;
         }
-        public readonly Dictionary<string, List<string>> ExistsShardingTables
-            = new Dictionary<string, List<string>>();
 
         #endregion
 
-        #region 配置构建
-
+        #region //步骤3：配置构建，如果配置实体程序集，添加数据源，配置分片分表
+        //todo2
         public IDynamicDBTBuilder SetEntityAssemblies(params Assembly[] assemblies)
         {
             DynamicDBTOption.EntityAssemblies = assemblies;
-
             return this;
         }
         public IDynamicDBTBuilder SetCommandTimeout(int timeout)
@@ -299,14 +293,14 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
                     options
                     );
 
-                if (typeof(IDynamicDBTService) == typeof(IDynamicDBTService))
-                    return (IDynamicDBTService)db;
+                if (typeof(TDynamicDBTService) == typeof(IDynamicDBTService))
+                    return (TDynamicDBTService)db;
                 else
-                    return db.ActLike<IDynamicDBTService>();
+                    return db.ActLike<TDynamicDBTService>();
             });
-
             return this;
         }
+        //todo3
         public IDynamicDBTBuilder AddDataSource(string connectionString, DynamicReadWriteType readWriteType, DynamicDBType dbType, string sourceName = "DefaultSource")
         {
             return AddDataSource(new (string, DynamicReadWriteType)[] { (connectionString, readWriteType) }, dbType, sourceName);
@@ -322,6 +316,7 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
 
             return this;
         }
+        //todo4
         public IDynamicDBTBuilder SetDateSharding<TEntity>(string shardingField, DynamicExpandByDateMode expandByDateMode, DateTime startTime, string sourceName = "DefaultSource")
         {
             return SetDateSharding<TEntity>(shardingField, expandByDateMode, (startTime, DateTime.MaxValue, sourceName));
@@ -338,22 +333,44 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
                 DynamicShardingType = DynamicShardingType.Date
             };
             _shardingRules.Add(shardingRule);
-
-            DynamicDBTOption.Bootstrapper += serviceProvider =>
+            // 按时间建表引导创建
+            DynamicDBTOption.InitStartup += serviceProvider =>
             {
                 var sharingOption = serviceProvider.GetService<IOptions<DynamicDBTOption>>().Value;
-
-                (string conExpression, string startTimeFormat, Func<DateTime, DateTime> nextTime) paramter =
-                    expandByDateMode switch
-                    {
-                        DynamicExpandByDateMode.PerMinute => ("0 * * * * ? *", "yyyy/MM/dd HH:mm:00", x => x.AddMinutes(1)),
-                        DynamicExpandByDateMode.PerHour => ("0 0 * * * ? *", "yyyy/MM/dd HH:00:00", x => x.AddHours(1)),
-                        DynamicExpandByDateMode.PerDay => ("0 0 0 * * ? *", "yyyy/MM/dd 00:00:00", x => x.AddDays(1)),
-                        DynamicExpandByDateMode.PerMonth => ("0 0 0 1 * ? *", "yyyy/MM/01 00:00:00", x => x.AddMonths(1)),
-                        DynamicExpandByDateMode.PerYear => ("0 0 0 1 1 ? *", "yyyy/01/01 00:00:00", x => x.AddYears(1)),
-                        _ => throw new Exception("expandByDateMode参数无效")
-                    };
-
+                string conExpression;
+                string startTimeFormat;
+                Func<DateTime, DateTime> nextTime;
+                switch (expandByDateMode)
+                {
+                    case DynamicExpandByDateMode.PerMinute:
+                        conExpression = "0 * * * * ? *";
+                        startTimeFormat = "yyyy/MM/dd HH:mm:00";
+                        nextTime = x => x.AddMinutes(1);
+                        break;
+                    case DynamicExpandByDateMode.PerHour:
+                        conExpression = "0 0 * * * ? *";
+                        startTimeFormat = "yyyy/MM/dd HH:00:00";
+                        nextTime = x => x.AddHours(1);
+                        break;
+                    case DynamicExpandByDateMode.PerDay:
+                        conExpression = "0 0 0 * * ? *";
+                        startTimeFormat = "yyyy/MM/dd 00:00:00";
+                        nextTime = x => x.AddDays(1);
+                        break;
+                    case DynamicExpandByDateMode.PerMonth:
+                        conExpression = "0 0 0 1 * ? *";
+                        startTimeFormat = "yyyy/MM/01 00:00:00";
+                        nextTime = x => x.AddMonths(1);
+                        break;
+                    case DynamicExpandByDateMode.PerYear:
+                        conExpression = "0 0 0 1 1 ? *";
+                        startTimeFormat = "yyyy/01/01 00:00:00";
+                        nextTime = x => x.AddYears(1);
+                        break;
+                    default:
+                        throw new Exception("expandByDateMode参数无效");
+                }
+                var paramter = (conExpression, startTimeFormat, nextTime);
                 //确保之前的表已存在
                 var theTime = ranges.Min(x => x.startTime);
                 theTime = DateTime.Parse(theTime.ToString(paramter.startTimeFormat));
@@ -419,8 +436,8 @@ namespace LingYan.DynamicShardingDBT.ShardingIoc
                 DynamicShardingType = DynamicShardingType.HashMod
             };
             _shardingRules.Add(rule);
-
-            DynamicDBTOption.Bootstrapper += serviceProvider =>
+            //取模建表引导创建
+            DynamicDBTOption.InitStartup += serviceProvider =>
             {
                 var sharingOption = serviceProvider.GetService<IOptions<DynamicDBTOption>>().Value;
 

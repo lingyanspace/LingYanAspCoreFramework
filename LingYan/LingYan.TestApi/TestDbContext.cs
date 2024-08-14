@@ -1,5 +1,7 @@
 ﻿using LingYan.DynamicShardingDBT.DBTContext;
+using LingYan.DynamicShardingDBT.DBTFactory;
 using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Design.Internal;
 
 namespace LingYan.TestApi
 {
@@ -8,6 +10,6 @@ namespace LingYan.TestApi
         public DbSet<TestEntity> TestEntity { get; set; }
         public TestDbContext(DynamicDbContext dynamicDbContext) : base(dynamicDbContext)
         {
-        }
+        }     
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LingYan.TestApi.Migrations
 {
     [DbContext(typeof(TestDbContext))]
-    [Migration("20240813091631_v1")]
+    [Migration("20240814094722_v1")]
     partial class v1
     {
         /// <inheritdoc />
@@ -45,7 +45,7 @@ namespace LingYan.TestApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TestEntity");
+                    b.ToTable("Test");
                 });
 #pragma warning restore 612, 618
         }

@@ -85,7 +85,7 @@ namespace LingYan.DynamicShardingDBT.DBTModel
                         {
                             if (EntityAssemblies == null || EntityAssemblies.Length == 0)
                             {
-                                throw new Exception("EFCore.Sharding:请使用SetEntityAssemblies指定实体程序集");
+                                throw new Exception("灵燕分库分表框架提醒你:请使用SetEntityAssemblies指定实体程序集");
                             }
 
                             _types = (EntityAssemblies ?? Array.Empty<Assembly>()).SelectMany(x => x.GetTypes()).ToArray();
@@ -96,7 +96,7 @@ namespace LingYan.DynamicShardingDBT.DBTModel
                 return _types;
             }
         }
-
-        internal static Action<IServiceProvider> Bootstrapper;
+        //服务启动时调用，初始化引导验证分表是否创建与分表是否完成
+        internal static Action<IServiceProvider> InitStartup;  
     }
 }

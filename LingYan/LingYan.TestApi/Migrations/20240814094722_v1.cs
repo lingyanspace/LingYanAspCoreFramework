@@ -16,7 +16,7 @@ namespace LingYan.TestApi.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "TestEntity",
+                name: "Test",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
@@ -28,7 +28,7 @@ namespace LingYan.TestApi.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TestEntity", x => x.Id);
+                    table.PrimaryKey("PK_Test", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
         }
@@ -37,7 +37,7 @@ namespace LingYan.TestApi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "TestEntity");
+                name: "Test");
         }
     }
 }

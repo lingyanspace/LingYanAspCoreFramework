@@ -36,8 +36,8 @@ namespace LingYan.DynamicShardingDBT.DBTContext
         internal string FirstCallStackTrace;
         public DynamicDbContext(DbContextOptions contextOptions, DynamicDBCParamater dynamicDBCParamater, DynamicDBTOption dynamicDBTOption, IServiceProvider serviceProvider) : base(contextOptions)
         {
+          
             ServiceProvider = serviceProvider;
-
             CreateTime = DateTimeOffset.Now;
             CreateStackTrace = Environment.StackTrace;
             DynamicDBTCache.DynamicDbContexts.Add(this);
@@ -48,14 +48,8 @@ namespace LingYan.DynamicShardingDBT.DBTContext
 
             Database.SetCommandTimeout(dynamicDBTOption.CommandTimeout);
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="dbContext"></param>
         public DynamicDbContext(DynamicDbContext dbContext) : this(dbContext.DbContextOption, dbContext.DynamicDBCParamater, dbContext.DynamicDBTOption, dbContext.ServiceProvider)
         {
-
         }
         private static readonly ValueConverter<DateTime, DateTime> _dateTimeConverter = new ValueConverter<DateTime, DateTime>(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Local));
 
@@ -64,9 +58,8 @@ namespace LingYan.DynamicShardingDBT.DBTContext
         /// </summary>
         /// <param name="modelBuilder"></param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
+        {            
             FirstCallStackTrace = Environment.StackTrace;
-
             List<Type> entityTypes;
             if (DynamicDBCParamater.EntityTypes?.Length > 0)
             {
@@ -84,7 +77,6 @@ namespace LingYan.DynamicShardingDBT.DBTContext
 
                 entityTypes = q.ToList();
             }
-
             entityTypes.ForEach(aEntity =>
             {
                 var entity = modelBuilder.Entity(aEntity);
@@ -96,7 +88,6 @@ namespace LingYan.DynamicShardingDBT.DBTContext
                     entity.ToTable($"{AnnotationHelper.GetDbTableName(aEntity)}_{DynamicDBCParamater.Suffix}", AnnotationHelper.GetDbSchemaName(aEntity));
                 }
             });
-
             //支持IEntityTypeConfiguration配置
             entityTypes.ForEach(aEntityType =>
             {
@@ -119,7 +110,6 @@ namespace LingYan.DynamicShardingDBT.DBTContext
                     method.MakeGenericMethod(aEntityType).Invoke(modelBuilder, new object[] { Activator.CreateInstance(aEntityConfig) });
                 });
             });
-
             //DateTime默认为Local
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
@@ -128,37 +118,7 @@ namespace LingYan.DynamicShardingDBT.DBTContext
                     if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
                         property.SetValueConverter(_dateTimeConverter);
                 }
-            }
-
-            //字段注释,需要开启程序集XML文档
-            //if (DynamicDBTOption.EnableComments)
-            //{
-            //    foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            //    {
-            //        foreach (var property in entityType.GetProperties())
-            //        {
-            //            if (property.PropertyInfo == null)
-            //            {
-            //                continue;
-            //            }
-
-            //            StringBuilder comment = new StringBuilder(property.PropertyInfo.GetXmlDocsSummary());
-
-            //            if (property.PropertyInfo.PropertyType.IsEnum)
-            //            {
-            //                foreach (var aValue in Enum.GetValues(property.PropertyInfo.PropertyType))
-            //                {
-            //                    var memberComment = property.PropertyInfo.PropertyType.GetMembers()
-            //                        .Where(x => x.Name == aValue.ToString())
-            //                        .FirstOrDefault()?
-            //                        .GetXmlDocsSummary();
-            //                    comment.Append($" {(int)aValue}={memberComment}");
-            //                }
-            //            }
-            //            property.SetComment(comment.ToString());
-            //        }
-            //    }
-            //}
+            }           
         }
 
         /// <summary>

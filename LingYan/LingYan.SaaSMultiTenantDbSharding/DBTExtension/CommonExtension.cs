@@ -30,6 +30,11 @@ namespace LingYan.DynamicShardingDBT.DBTExtension
     }
     public static class CommonExtension
     {
+        public static bool IsNullable(this Type theType)
+        {
+            return (theType.IsGenericType && theType.GetGenericTypeDefinition() == (typeof(Nullable<>)));
+        }
+
         #region 拓展And和Or方法
 
         /// <summary>

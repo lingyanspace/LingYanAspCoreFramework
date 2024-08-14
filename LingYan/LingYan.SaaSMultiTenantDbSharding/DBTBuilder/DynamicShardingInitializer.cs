@@ -7,13 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
-namespace LingYan.DynamicShardingDBT.DBTIoc
+namespace LingYan.DynamicShardingDBT.DBTBuilder
 {
-    /// <summary>
-    /// EFCoreSharding初始化加载
-    /// 注：非Host环境需要手动调用
-    /// </summary>
-    public class DynamicShardingBootstrapper : BackgroundService
+    public class DynamicShardingInitializer : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly DynamicDBTOption _shardingOptions;
@@ -21,7 +17,7 @@ namespace LingYan.DynamicShardingDBT.DBTIoc
         /// 构造函数
         /// </summary> 
         /// <param name="serviceProvider"></param>
-        public DynamicShardingBootstrapper(IServiceProvider serviceProvider)
+        public DynamicShardingInitializer(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
             _shardingOptions = serviceProvider.GetService<IOptions<DynamicDBTOption>>().Value;
@@ -32,16 +28,15 @@ namespace LingYan.DynamicShardingDBT.DBTIoc
 
             DynamicDBTCache.ServiceProvider = serviceProvider;
         }
-
         /// <summary>
-        /// 加载
+        /// 加载 
         /// </summary>
         /// <param name="stoppingToken"></param>
         /// <returns></returns>
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var scope = _serviceProvider.CreateScope();
-            DynamicDBTOption.Bootstrapper?.Invoke(scope.ServiceProvider);
+            DynamicDBTOption.InitStartup?.Invoke(scope.ServiceProvider);
 
             //长时间未释放监控,5分钟
             JobHelper.SetIntervalJob(() =>

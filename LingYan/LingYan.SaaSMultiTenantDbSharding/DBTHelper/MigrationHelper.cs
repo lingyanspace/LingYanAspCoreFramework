@@ -1,7 +1,7 @@
-﻿using LingYan.DynamicShardingDBT.DBTCache;
+﻿using LingYan.DynamicShardingDBT.DBTBuilder;
+using LingYan.DynamicShardingDBT.DBTCache;
 using LingYan.DynamicShardingDBT.DBTExtension;
 using LingYan.DynamicShardingDBT.DBTModel;
-using LingYan.DynamicShardingDBT.ShardingIoc;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -15,12 +15,7 @@ namespace LingYan.DynamicShardingDBT.DBTHelper
 {
     internal static class MigrationHelper
     {
-        public static void Generate(
-            MigrationOperation operation,
-            MigrationCommandListBuilder builder,
-            ISqlGenerationHelper sqlGenerationHelper,
-            List<MigrationCommand> addCmds
-            )
+        public static void Generate(MigrationOperation operation, MigrationCommandListBuilder builder, ISqlGenerationHelper sqlGenerationHelper, List<MigrationCommand> addCmds)
         {
             var shardingOption = DynamicDBTCache.ServiceProvider.GetService<IOptions<DynamicDBTOption>>().Value;
             if (!shardingOption.EnableShardingMigration)
@@ -43,7 +38,6 @@ namespace LingYan.DynamicShardingDBT.DBTHelper
                 }
             });
         }
-
         private static List<string> BuildShardingCmds(MigrationOperation operation, string sourceCmd, ISqlGenerationHelper sqlGenerationHelper)
         {
             //所有MigrationOperation定义
@@ -51,7 +45,7 @@ namespace LingYan.DynamicShardingDBT.DBTHelper
             //ColumnOperation仅替换Table
             //其余其余都是将Name和Table使用分表名替换
             Dictionary<string, List<string>> _existsShardingTables
-                = DynamicDBTCache.ServiceProvider.GetService<DynamicaDBTIoc>().ExistsShardingTables;
+                = DynamicDBTCache.ServiceProvider.GetService<DynamicaDBTBuilder>().ExistsShardingTables;
 
             List<string> resList = new List<string>();
             string absTableName = string.Empty;
@@ -95,8 +89,7 @@ namespace LingYan.DynamicShardingDBT.DBTHelper
                 return string.Format("^({0})$|^({0}_.*?)$|^(.*?_{0}_.*?)$|^(.*?_{0})$", absTableName);
             }
         }
-        private static List<(string sourceName, string targetName)> GetReplaceGroups(
-            MigrationOperation operation, string sourceTableName, string targetTableName)
+        private static List<(string sourceName, string targetName)> GetReplaceGroups(MigrationOperation operation, string sourceTableName, string targetTableName)
         {
             List<(string sourceName, string targetName)> resList =
                 new List<(string sourceName, string targetName)>

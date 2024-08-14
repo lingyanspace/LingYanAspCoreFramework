@@ -21,7 +21,7 @@ namespace LingYan.DynamicShardingDBT.DBTAdaptor.Mysql
         {
             return new MySqlDBTService(baseDbContext);
         }
-
+        //todo16
         public override void UseDatabase(DbContextOptionsBuilder dbContextOptionsBuilder, DbConnection dbConnection)
         {
             Action<MySqlDbContextOptionsBuilder> mySqlOptionsAction = x => x.UseNetTopologySuite();

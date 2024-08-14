@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace LingYan.DynamicShardingDBT.DBTModel
 {
+   // todo7
     internal class DiagnosticObserver : IObserver<DiagnosticListener>
     {
         private readonly ILoggerFactory _loggerFactory;

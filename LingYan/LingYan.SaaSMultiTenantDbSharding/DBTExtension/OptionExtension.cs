@@ -5,6 +5,7 @@ namespace LingYan.DynamicShardingDBT.DBTExtension
 {
     public static class OptionExtension
     {
+        //todo14
         public static DynamicDBTOption BuildOption(this IOptionsMonitor<DynamicDBTOption> doptMonior, string optionName)
         {
             if (optionName.IsNullOrEmpty())

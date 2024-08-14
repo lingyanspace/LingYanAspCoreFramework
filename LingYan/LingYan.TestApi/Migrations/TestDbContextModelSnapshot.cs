@@ -42,7 +42,7 @@ namespace LingYan.TestApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TestEntity");
+                    b.ToTable("Test");
                 });
 #pragma warning restore 612, 618
         }

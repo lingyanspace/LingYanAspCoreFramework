@@ -1,0 +1,8 @@
+﻿namespace LingYanAspCoreFramework.Attributes
+{
+    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
+    public class LYDynamicRouteAttribute : Attribute
+    {
+    }
+}
+ 

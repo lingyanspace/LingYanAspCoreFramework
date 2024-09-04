@@ -1,6 +1,4 @@
-﻿using LingYan.Model;
-using LongYuBuilding.ShardingModule.MultiTenant.SysTenantProvider;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace LingYanAspCoreFramework.MultiTenants
 {
@@ -27,7 +25,7 @@ namespace LingYanAspCoreFramework.MultiTenants
         public async Task Invoke(HttpContext context)
         {
 
-            if (context.Request.Path.ToString().StartsWith(LYExpose.TenantRoutePrefix.ToLower(), StringComparison.CurrentCultureIgnoreCase))
+            if (context.Request.Path.ToString().StartsWith(LingYanRuntimeManager.TenantRoutePrefix.ToLower(), StringComparison.CurrentCultureIgnoreCase))
             {
                 if (!context.User.Identity.IsAuthenticated)
                 {

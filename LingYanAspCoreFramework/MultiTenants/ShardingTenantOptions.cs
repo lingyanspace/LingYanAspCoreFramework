@@ -1,4 +1,4 @@
-﻿using LingYan.Model.ContextModel;
+﻿using LingYanAspCoreFramework.Attributes;
 
 namespace LingYanAspCoreFramework.MultiTenants
 {

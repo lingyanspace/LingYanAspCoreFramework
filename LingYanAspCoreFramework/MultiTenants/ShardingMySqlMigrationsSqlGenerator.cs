@@ -7,7 +7,7 @@ using Pomelo.EntityFrameworkCore.MySql.Migrations;
 using ShardingCore.Core.RuntimeContexts;
 using ShardingCore.Helpers;
 
-namespace LingYanAspCoreFramework.MultiTenants 
+namespace LingYanAspCoreFramework.MultiTenants
 {
     public class ShardingMySqlMigrationsSqlGenerator : MySqlMigrationsSqlGenerator
     {

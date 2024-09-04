@@ -1,4 +1,5 @@
 ﻿using LingYanAspCoreFramework.Models;
+using LingYanAspCoreFramework.Models.FFMpeg;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -84,11 +85,11 @@ namespace LingYanAspCoreFramework.Extensions
             string ffmpegPath = "";
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                ffmpegPath = FFmpegLibPath.GetLocalPath(LYExpose.CommonConfigModel.FFMpegLinuxConfig).GetLocalUrl("ffmpeg");
+                ffmpegPath = FFmpegLibPath.GetLocalPath(LingYanRuntimeManager.CommonConfigModel.FFMpegLinuxConfig).GetLocalUrl("ffmpeg");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                ffmpegPath = FFmpegLibPath.GetLocalPath(LYExpose.CommonConfigModel.FFMpegWinConfig).GetLocalUrl("ffmpeg.exe");
+                ffmpegPath = FFmpegLibPath.GetLocalPath(LingYanRuntimeManager.CommonConfigModel.FFMpegWinConfig).GetLocalUrl("ffmpeg.exe");
             }
             return ffmpegPath;
         }
@@ -98,11 +99,11 @@ namespace LingYanAspCoreFramework.Extensions
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 //ffmpegPath = "/usr/local/ffmpeg/ffmpeg";
-                ffmpegPath = FFmpegLibPath.GetLocalPath(LYExpose.CommonConfigModel.FFMpegLinuxConfig).GetLocalUrl("ffprobe");
+                ffmpegPath = FFmpegLibPath.GetLocalPath(LingYanRuntimeManager.CommonConfigModel.FFMpegLinuxConfig).GetLocalUrl("ffprobe");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                ffmpegPath = FFmpegLibPath.GetLocalPath(LYExpose.CommonConfigModel.FFMpegWinConfig).GetLocalUrl("ffprobe.exe");
+                ffmpegPath = FFmpegLibPath.GetLocalPath(LingYanRuntimeManager.CommonConfigModel.FFMpegWinConfig).GetLocalUrl("ffprobe.exe");
             }
             return ffmpegPath;
 

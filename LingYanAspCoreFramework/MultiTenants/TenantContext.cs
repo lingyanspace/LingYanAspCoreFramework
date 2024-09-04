@@ -1,4 +1,6 @@
-﻿namespace LingYanAspCoreFramework.MultiTenants
+﻿using ShardingCore.Core.RuntimeContexts;
+
+namespace LingYanAspCoreFramework.MultiTenants
 {
     public class TenantContext
     {

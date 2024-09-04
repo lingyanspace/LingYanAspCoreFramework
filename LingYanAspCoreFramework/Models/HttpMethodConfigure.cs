@@ -8,13 +8,6 @@
         /// <summary>
         /// 方法类型名
         /// </summary>
-        public List<string> MethodVal { get; set; }
-        public HttpMethodConfigure()
-        {
-            this.MethodVal = new List<string>();
-            this.MethodKey = "Get";
-            this.MethodVal.Add("GET");
-            this.MethodVal.Add("QUERY");
-        }
+        public List<string> MethodVal { get; set; }     
     }
 }

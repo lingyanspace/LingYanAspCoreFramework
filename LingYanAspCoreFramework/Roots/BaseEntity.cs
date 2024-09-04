@@ -1,4 +1,6 @@
-﻿namespace LingYanAspCoreFramework.Roots
+﻿using Yitter.IdGenerator;
+
+namespace LingYanAspCoreFramework.Roots
 {
     public class BaseEntity
     {

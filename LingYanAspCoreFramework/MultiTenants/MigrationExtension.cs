@@ -1,5 +1,4 @@
-﻿using LingYan.MultiTenant.SysMigrationsAssemblies;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace LingYanAspCoreFramework.MultiTenants

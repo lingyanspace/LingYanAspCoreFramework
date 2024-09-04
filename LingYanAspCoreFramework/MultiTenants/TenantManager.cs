@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using ShardingCore.Core.RuntimeContexts;
+using System.Collections.Concurrent;
 
 namespace LingYanAspCoreFramework.MultiTenants
 {

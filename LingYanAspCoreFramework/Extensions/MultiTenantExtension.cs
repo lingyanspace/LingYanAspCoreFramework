@@ -1,6 +1,5 @@
-﻿using LingYan.Model;
-using LingYan.MultiTenant.SysShardingBuilder;
-using LongYuBuilding.ShardingModule.MultiTenant.SysTenantProvider;
+﻿using LingYanAspCoreFramework;
+using LingYanAspCoreFramework.MultiTenants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ShardingCore.Extensions;
@@ -33,7 +32,7 @@ namespace LingYan.MultiTenant
                 {
                     var runtimeContext = _tenantManager.GetCurrentTenantContext().GetShardingRuntimeContext();
                     //runtimeContext.UseAutoShardingCreate(); //启动定时任务
-                    var tenantDbContext = (DbContext)scope.ServiceProvider.GetService(LYExpose.LYBuilderRuntimeManager.TenantTemplateDbContexts.FirstOrDefault());
+                    var tenantDbContext = (DbContext)scope.ServiceProvider.GetService(LingYanRuntimeManager.RuntimeCacheModel.TenantTemplateDbContexts.FirstOrDefault());
                     tenantDbContext.Database.Migrate();
                     runtimeContext.UseAutoTryCompensateTable();
                 }

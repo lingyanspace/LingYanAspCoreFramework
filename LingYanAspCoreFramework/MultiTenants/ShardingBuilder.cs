@@ -1,8 +1,4 @@
-﻿using LingYan.Model;
-using LingYan.Model.ContextModel;
-using LingYan.MultiTenant.SysExtension;
-using LingYan.MultiTenant.SysMigrationsAssemblies;
-using LingYan.MultiTenant.SysSharding;
+﻿using LingYanAspCoreFramework.Attributes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +24,7 @@ namespace LingYanAspCoreFramework.MultiTenants
         public IShardingRuntimeContext Build(ShardingTenantOptions tenantOptions)
         {
             Type shardingRuntimeBuilderType = typeof(ShardingRuntimeBuilder<>);
-            Type dbContextType = LYExpose.LYBuilderRuntimeManager.TenantTemplateDbContexts.FirstOrDefault();
+            Type dbContextType = LingYanRuntimeManager.RuntimeCacheModel.TenantTemplateDbContexts.FirstOrDefault();
             Type constructedType = shardingRuntimeBuilderType.MakeGenericType(dbContextType);
             var shardingRuntimeBuilderInstance = Activator.CreateInstance(constructedType);
             // 具体化后的类型确定后，获取具体化后的类型的MethodInfo
@@ -38,18 +34,18 @@ namespace LingYanAspCoreFramework.MultiTenants
             //配置路由委托
             var UseRouteConfigDelegate = new Action<IShardingRouteConfigOptions>((option) =>
             {
-                if (LYExpose.LYBuilderRuntimeManager.VirtualTableList.Keys.Count > 0)
+                if (LingYanRuntimeManager.RuntimeCacheModel.VirtualTableList.Keys.Count > 0)
                 {
                     if (tenantOptions.ShardingKeyType == ShardingKeyType.Mod)
                     {
-                        LYExpose.LYBuilderRuntimeManager.VirtualTableList[ShardingKeyType.Mod].ForEach(modShardingTable =>
+                        LingYanRuntimeManager.RuntimeCacheModel.VirtualTableList[ShardingKeyType.Mod].ForEach(modShardingTable =>
                         {
                             option.AddShardingTableRoute(modShardingTable);
                         });
                     }
                     if (tenantOptions.ShardingKeyType == ShardingKeyType.Time)
                     {
-                        LYExpose.LYBuilderRuntimeManager.VirtualTableList[ShardingKeyType.Time].ForEach(modShardingTable =>
+                        LingYanRuntimeManager.RuntimeCacheModel.VirtualTableList[ShardingKeyType.Time].ForEach(modShardingTable =>
                         {
                             option.AddShardingTableRoute(modShardingTable);
                         });
@@ -70,12 +66,7 @@ namespace LingYanAspCoreFramework.MultiTenants
                     {
                         builder.UseMySql(conStr, MySqlServerVersion.AutoDetect(conStr))
                             .UseMigrationNamespace(new MySqlMigrationNamespace());
-                    }
-                    if (tenantOptions.DataBaseType == DataBaseType.MSSQL)
-                    {
-                        builder.UseSqlServer(conStr)
-                            .UseMigrationNamespace(new SqlServerMigrationNamespace());
-                    }
+                    }                 
                     builder.UseLoggerFactory(provider.GetService<ILoggerFactory>())
                         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
                         .ReplaceService<IMigrationsAssembly, MultiDatabaseMigrationsAssembly>();
@@ -87,11 +78,6 @@ namespace LingYanAspCoreFramework.MultiTenants
                         builder.UseMySql(connection, MySqlServerVersion.AutoDetect(connection.ConnectionString))
                         .UseMigrationNamespace(new MySqlMigrationNamespace());//迁移只会用connection string创建所以可以不加
                     }
-                    if (tenantOptions.DataBaseType == DataBaseType.MSSQL)
-                    {
-                        builder.UseSqlServer(connection)
-                        .UseMigrationNamespace(new SqlServerMigrationNamespace());
-                    }
                     builder.UseLoggerFactory(provider.GetService<ILoggerFactory>())
                         .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
                 });
@@ -102,11 +88,7 @@ namespace LingYanAspCoreFramework.MultiTenants
                     if (tenantOptions.DataBaseType == DataBaseType.MYSQL)
                     {
                         b.ReplaceService<IMigrationsSqlGenerator, ShardingMySqlMigrationsSqlGenerator>();
-                    }
-                    if (tenantOptions.DataBaseType == DataBaseType.MSSQL)
-                    {
-                        b.ReplaceService<IMigrationsSqlGenerator, ShardingSqlServerMigrationsSqlGenerator>();
-                    }
+                    }                   
                 });
             });
             //执行

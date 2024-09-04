@@ -1,6 +1,5 @@
-﻿using LingYan.Model;
-using LingYan.Model.DynamicHttpMethodModel;
-using LingYanAspCoreFramework.Attributes;
+﻿using LingYanAspCoreFramework.Attributes;
+using LingYanAspCoreFramework.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
@@ -15,7 +14,7 @@ namespace LingYanAspCoreFramework.DynamicApis
         public DynamicControllerConvention(IConfiguration configuration)
         {
             _configuration = configuration;
-            httpMethods = LYExpose.HttpMethodConfigure;
+            httpMethods = LingYanRuntimeManager.HttpMethodConfigure;
         }
         public void Apply(ApplicationModel application)
         {

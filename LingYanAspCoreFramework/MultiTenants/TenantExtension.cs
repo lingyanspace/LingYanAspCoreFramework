@@ -1,12 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using LingYanAspCoreFramework.Attributes;
+using LingYanAspCoreFramework.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using ShardingCore.Extensions;
 using System.Collections;
 
 namespace LingYanAspCoreFramework.MultiTenants
 {
     public static class TenantExtension
     {
-        public static void InitTenant(this IServiceProvider serviceProvider,LYBuilderRuntimeModel lYBuilderRuntimeModel)
+        public static void InitTenant(this IServiceProvider serviceProvider, RuntimeCacheModel lYBuilderRuntimeModel)
         {
             var tenantManager = serviceProvider.GetService<ITenantManager>();
             var shardingBuilder = serviceProvider.GetService<IShardingBuilder>();

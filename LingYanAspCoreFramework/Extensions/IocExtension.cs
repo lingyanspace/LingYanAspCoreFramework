@@ -711,10 +711,10 @@ namespace LingYanAspCoreFramework.Extensions
             {
                 // [ApiExplorerSettings(GroupName = "v2")]
                 //接口文档
-                swaggerGenOption.SwaggerDoc("v1", new OpenApiInfo { Title = "DrawingCloudCasting.RESTApi", Version = "v1" });
+                swaggerGenOption.SwaggerDoc("dev1", new OpenApiInfo { Title = LingYanRuntimeManager.ProjectName, Version = "v1" });
                 //注解配置
-                swaggerGenOption.IncludeXmlComments(LingYanRuntimeManager.HostPhysicsRoot.GetLocalUrl("DrawingCloudCasting.RESTApi.xml"), true);
-                ////接口排序
+                swaggerGenOption.IncludeXmlComments(LingYanRuntimeManager.HostPhysicsRoot.GetLocalUrl(LingYanRuntimeManager.ProjectName+".xml"), true);
+                //接口排序
                 swaggerGenOption.OrderActionsBy(apiDescription => apiDescription.RelativePath.Length.ToString());
                 //添加访问前缀
                 var ip4LocalArea = IPHelper.GetInternalIPv4Address();

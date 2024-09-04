@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LingYanAspCoreFramework", "..\LingYanAspCoreFramework\LingYanAspCoreFramework.csproj", "{93991863-5109-4A74-ABF3-4BAD26D73B6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LingYanAspCoreFramework", "LingYanAspCoreFramework.csproj", "{CE541333-F05B-46FC-9A4C-E3B4DD3F8D16}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{93991863-5109-4A74-ABF3-4BAD26D73B6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{93991863-5109-4A74-ABF3-4BAD26D73B6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{93991863-5109-4A74-ABF3-4BAD26D73B6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{93991863-5109-4A74-ABF3-4BAD26D73B6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE541333-F05B-46FC-9A4C-E3B4DD3F8D16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE541333-F05B-46FC-9A4C-E3B4DD3F8D16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE541333-F05B-46FC-9A4C-E3B4DD3F8D16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE541333-F05B-46FC-9A4C-E3B4DD3F8D16}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {06FC50A5-3BBF-4BF5-85FC-7784CF47564E}
+		SolutionGuid = {8E8A7122-838E-452F-B090-32DFD103A0B6}
 	EndGlobalSection
 EndGlobal

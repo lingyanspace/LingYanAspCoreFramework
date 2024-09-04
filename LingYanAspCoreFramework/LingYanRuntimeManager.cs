@@ -4,6 +4,8 @@ namespace LingYanAspCoreFramework
 {
     public class LingYanRuntimeManager
     {
+        //项目名称必须与主程序集名称一致，应用于接口文档于接口注释的文件
+        public static string ProjectName { get; set; } 
         //跨域策略
         public static string CrossPolicy { get; set; }
         //鉴权方案
@@ -39,6 +41,7 @@ namespace LingYanAspCoreFramework
         public static ConfigurationManager SysConfiguration { get; set; }
         public static void Init()
         {
+            ProjectName = "LingYanAspCoreFramework";
             CrossPolicy = "LYCrossPolicy";
             BearerScheme = "Bearer";
             EmpowerPolicy = "Empower";
@@ -55,12 +58,13 @@ namespace LingYanAspCoreFramework
             HttpMethodConfigure = new List<HttpMethodConfigure>();
             MysqlConfigModel = new MysqlConfigModel();
             CommonConfigModel = new CommonConfigModel();
-            RuntimeCacheModel.LingYanConfiguration.AddJsonFile(Path.Combine(HostPhysicsRoot, "Environments", "Configurations", "LingYanSetting.json"));
+            RuntimeCacheModel.LingYanConfiguration.AddJsonFile(Path.Combine(HostPhysicsRoot, "Envs", "Configurations", "LingYanSetting.json"));
             Config();
         }
         private static void Config()
         {
             //配置静态文件目录
+            ProjectName = RuntimeCacheModel.LingYanConfiguration.GetSection("ProjectName").Get<string>();
             CrossDomains = RuntimeCacheModel.LingYanConfiguration.GetSection("CrossDomains").Get<string[]>();
             ListeningPorts = RuntimeCacheModel.LingYanConfiguration.GetSection("ListeningPorts").Get<string[]>();
             DynamicHttpRoutePrefix = RuntimeCacheModel.LingYanConfiguration.GetSection("DynamicHttpRoutePrefix").Get<string>();

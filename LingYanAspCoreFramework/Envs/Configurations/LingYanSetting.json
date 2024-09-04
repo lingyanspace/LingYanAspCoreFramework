@@ -71,9 +71,9 @@
   //常规配置
   "CommonConfigModel": {
     //配置文件位置
-    "FFMpegWinConfig": "Environments/FFMpegWinConfig",
-    "FFMpegLinuxConfig": "Environments/FFMpegLinuxConfig",
-    "NlogConfig": "Environments/Configurations/NLog.config",
+    "FFMpegWinConfig": "Envs/FFMpegWinConfig",
+    "FFMpegLinuxConfig": "Envs/FFMpegLinuxConfig",
+    "NlogConfig": "Envs/Configurations/NLog.config",
     //网络主机
     "IPLimitVideo": "https://ip:port",
     "IPLimitFile": "https://ip:port",
@@ -85,6 +85,8 @@
     "ChatFile": "ChatFile",
     "SoftFile": "SoftFile"
   },
+  //项目名称
+  "ProjectName": "LingYanAspCoreFramework",
   //动态路由前缀
   "DynamicHttpRoutePrefix": "dynamicly",
   //多租户路由前缀
